@@ -19,8 +19,15 @@ class ACDCDataset(ContrastDataset, _ACDCDataset):
     def __init__(self, root_dir: str, mode: str, transforms: SequentialWrapper = SequentialWrapper(),
                  verbose=True, *args, **kwargs) -> None:
         super().__init__(root_dir, mode, ["img", "gt"], transforms, verbose)
-        self._acdc_info = np.load(os.path.join(self._root_dir, "acdc_info.npy"), allow_pickle=True).item()
-        assert isinstance(self._acdc_info, dict) and len(self._acdc_info) == 200
+        try:
+            self._acdc_info = np.load(os.path.join(self._root_dir, "acdc_info.npy"), allow_pickle=True).item()
+            assert isinstance(self._acdc_info, dict) and len(self._acdc_info) == 200
+        except Exception:
+            self._acdc_info = {}
+            with open(os.path.join(self._root_dir, "acdc_info.txt"), "r") as f:
+                for line in f:
+                    fields = line.strip().split(" ")
+                    self._acdc_info[fields[0]] = int(fields[1])
         self._transform = transforms
 
     def __getitem__(self, index) -> Tuple[List[Tensor], str, str, str]:
